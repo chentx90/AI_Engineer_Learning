@@ -1,0 +1,8 @@
+product_id,product_name,price,category,rating,review_count,last_updated
+1001,Wireless Mouse,29.99,Electronics,4.2,156,2026-03-15
+1002,USB-C Cable,,Electronics,4.5,89,2026-03-10
+1003,Notebook Set,15.50,Stationery,3.8,45,2026-03-18
+1004,Coffee Mug,12.99,Home & Kitchen,4.7,203,2026-03-12
+1005,Desk Lamp,$35.75,Home & Kitchen,4.0,78,2026-02-28
+1006,Python Programming Book,45.00,Books,4.9,312,2026-03-05
+1007,Bluetooth Speaker,89.99,Electronics,4.3,167,2026-03-20
