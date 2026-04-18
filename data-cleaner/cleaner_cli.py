@@ -1,3 +1,5 @@
+import argparse
+
 import pandas as pd
 import os
 import sys
@@ -73,28 +75,40 @@ def generate_report(df, original_df):
 def main():
     """主函数：执行完整清理流程"""
 
-    # 获取当前脚本所在目录的绝对路径
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    # 拼接出绝对安全的数据路径
-    input_file = os.path.join(BASE_DIR, 'sample_data', 'amazon_products_sample.csv')
 
-    # 文件路径
-    #data_dir = 'sample_data'
-    #input_file = os.path.join(data_dir, 'amazon_products_sample.csv')
-    output_file = os.path.join(data_dir, 'amazon_products_cleaned.csv')
+    # 1. 设置argparse
+    parser = argparse.ArgumentParser(description="数据清洗器CLI工具 v0.2")
 
-    print("🛒 电商商品数据清洗器 v0.1") 
+    # 设置input参数
+    parser.add_argument(
+        "-i", "--input",
+        type = str,
+        required = True,
+        help = "输入的原始 CSV 文件路径"
+    )
+    parser.add_argument(
+        "-o", "--output",
+        type = str,
+        default = "cleaned_result.csv",
+        help="输出的 CSV 文件路径"
+    )
+
+    args = parser.parse_args()
+
+    print(f"🛒 开始清洗数据...")
+    print(f"📥 输入文件: {args.input}")
+    print(f"📤 输出文件: {args.output}")
     print("-" * 40)
 
-    original_df = load_data(input_file)
+    original_df = load_data(args.input)
     df = original_df.copy()
 
     df = clean_price_column(df)
     df = parse_dates(df)
 
     # 保存清洗后的数据
-    df.to_csv(output_file, index=False)
-    print(f"\n💾 清洗后数据已保存至: {output_file}")
+    df.to_csv(args.output, index=False)
+    print(f"\n💾 清洗后数据已保存至: {args.output}")
 
      # 生成报告
     generate_report(df, original_df)
