@@ -1,54 +1,53 @@
 import argparse
-import os
 import logging
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
+import os
 
+
+#  加载环境变量
 load_dotenv()
 
-
 class ECommerceCopywriter:
-    def __init__(self):
-        # 1. 配置日志
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-        self.logger = logging.getLogger("Copywriter")
+    def __init__(self, model_name: str = "deepseek-chat"):
+        # 配置日志
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-        self.logger.info("正在连接 DeepSeek 大模型...")
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("初始化大模型...")
 
-        # ⚠️ 关键点：一定要写 self.llm
         self.llm = ChatOpenAI(
+            base_url=os.getenv("OPENAI_BASE_URL"),  #
+            api_key=os.getenv("OPENAI_API_KEY"),  #
             model="deepseek-chat",
-            openai_api_key=os.getenv("DEEPSEEK_API_KEY"),  # 确保 .env 里是这个名字
-            openai_api_base="https://api.deepseek.com/v1",  # DeepSeek 官方地址
-            temperature=0.8
+            temperature=0.7
         )
 
-        # 2. 定义提示词模板
+        # 定义提诗词模板
+        # {product_name} 和 {features} 是我们要动态填入的变量
         self.prompt_template = PromptTemplate(
             input_variables=["product_name", "features"],
             template="""
             你是一个经验丰富的亚马逊电商金牌运营。
             请为以下商品写一段吸引人的产品描述（约100字），突出卖点，激发购买欲。
-
+            
             商品名称：{product_name}
             核心卖点：{features}
-
-            营销文案：
+            
+            营销文案:
             """
         )
 
     def generate_copy(self, product_name: str, features: str) -> str:
-        # 这里会用到 self.llm，如果上面没定义成功，这里就会报你看到的错
         self.logger.info(f"正在为 [{product_name}] 生成文案...")
 
-        final_prompt = self.prompt_template.format(
-            product_name=product_name,
-            features=features
-        )
+        # 1. 将变量填入模板，生成最终的 Prompt 字符串
+        final_prompt = self.prompt_template.format(product_name=product_name, features=features)
 
-        # 调用模型
+        # 2. 调用模型
         response = self.llm.invoke(final_prompt)
+
         return response.content
 
 def main():
@@ -70,3 +69,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
