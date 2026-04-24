@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
-from services import ECommerceCopywriterService
+from backend.services import convert_history_to_langchain, ECommerceCopywriterService, RAGPolicyService
+from typing import List, Literal
 
 
 # 实列化FastAPI应用
@@ -8,6 +9,24 @@ app = FastAPI(title="亚马逊智能助手API", version="0.1.0")
 
 # 在应用启动时，实例化服务（作为全局单例，避免每次请求都重新初始化大模型）
 copywriter_service = ECommerceCopywriterService()
+rag_service = RAGPolicyService()
+
+# 定义聊天记录模型
+class ChatMessage(BaseModel):
+    role: Literal["human", "ai"] = Field(..., description="消息源", json_schema_extra={"example": "human"})
+    content: str = Field(..., description="消息内容", json_schema_extra={"example":"电子产品退货期多久？"})
+
+# 定义RAG请求模型
+class RAGChatMessage(BaseModel):
+    question: str = Field(..., description="用户最新提问", json_schema_extra={"example":"那运费谁出？"})
+    chat_history: List[ChatMessage] = Field(default=list, description="历史聊天记录为空")
+
+# 定义RAG响应模型
+class RAGChatResponse(BaseModel):
+    question: str
+    answers: str
+    status: str = "success"
+
 
 class CopywriterRequest(BaseModel):
     product_name: str = Field(..., description="商品名称", json_schema_extra={"example": "人体工学鼠标"})
@@ -43,6 +62,24 @@ async def generate_copy_api(request: CopywriterRequest):
         product_name=request.product_name,
         generated_copy=real_copy
     )
+
+@app.post("/api/rag/ask", response_model=RAGChatResponse)
+async def ask_policy_api(request:RAGChatMessage):
+    """
+    亚马逊内部政策问答接口（支持多轮对话）
+    """
+    # 转换消息列表
+    lc_chat_history = convert_history_to_langchain(request.chat_history)
+    # 异步调用方法
+    answer = await rag_service.ask_policy_async(
+        question=request.question,
+        chat_history_lc=lc_chat_history
+    )
+    return RAGChatResponse(
+        question=request.question,
+        answers=answer
+    )
+
 
 
 

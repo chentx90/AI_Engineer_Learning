@@ -1,0 +1,13 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=PyCharm
+
+###
+POST http://127.0.0.1:8000/api/rag/ask
+Content-Type: application/json
+
+{
+  "question": "你们卖衣服吗？",
+  "chat_history": []
+}
+###
