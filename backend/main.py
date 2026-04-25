@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
-from backend.services import convert_history_to_langchain, ECommerceCopywriterService, RAGPolicyService, ECommerceAgentService
+from services import convert_history_to_langchain, ECommerceCopywriterService, RAGPolicyService, ECommerceAgentService
 from typing import List, Literal
 
 
@@ -24,8 +24,7 @@ class RAGChatMessage(BaseModel):
 
 # 定义RAG响应模型
 class RAGChatResponse(BaseModel):
-    question: str
-    answers: str
+    answer: str
     status: str = "success"
 
 
@@ -88,8 +87,7 @@ async def ask_policy_api(request:RAGChatMessage):
         chat_history_lc=lc_chat_history
     )
     return RAGChatResponse(
-        question=request.question,
-        answers=answer
+        answer=answer
     )
 
 
