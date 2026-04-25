@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
-from backend.services import convert_history_to_langchain, ECommerceCopywriterService, RAGPolicyService
+from backend.services import convert_history_to_langchain, ECommerceCopywriterService, RAGPolicyService, ECommerceAgentService
 from typing import List, Literal
 
 
@@ -10,6 +10,7 @@ app = FastAPI(title="亚马逊智能助手API", version="0.1.0")
 # 在应用启动时，实例化服务（作为全局单例，避免每次请求都重新初始化大模型）
 copywriter_service = ECommerceCopywriterService()
 rag_service = RAGPolicyService()
+agent_service = ECommerceAgentService()
 
 # 定义聊天记录模型
 class ChatMessage(BaseModel):
@@ -38,6 +39,17 @@ class CopywriterResponse(BaseModel):
     product_name: str
     generated_copy: str
     status: str = "success"
+
+# 3. 定义 Pydantic 模型
+class AgentChatRequest(BaseModel):
+    question: str = Field(..., description="用户问题", json_schema_extra={"example": "查一下订单 123 发货了吗？"})
+    chat_history: List[ChatMessage] = Field(default_factory=list)
+
+class AgentChatResponse(BaseModel):
+    answer: str
+    intermediate_steps: list = Field(description="AI调用的工具详情", default_factory=list)
+    status: str = "success"
+
 
 # 定义Routing和GET请求
 @app.get("/")
@@ -80,6 +92,22 @@ async def ask_policy_api(request:RAGChatMessage):
         answers=answer
     )
 
+
+@app.post("/api/agent/chat", response_model=AgentChatResponse)
+async def agent_chat_api(request: AgentChatRequest):
+    # 转换历史记录 (复用上午的函数)
+    lc_chat_history = convert_history_to_langchain(request.chat_history)
+
+    # 调用 Agent 服务
+    result = await agent_service.agent_chat_async(
+        question=request.question,
+        chat_history=lc_chat_history
+    )
+
+    return AgentChatResponse(
+        answer=result["answer"],
+        intermediate_steps=result["intermediate_steps"]
+    )
 
 
 
